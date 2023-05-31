@@ -5,6 +5,7 @@ import pprint
 import json
 import importlib
 import sys
+import webbrowser
 sys.path.append(__file__+'/../Parsers/')
 
 #Global Variables
@@ -243,8 +244,12 @@ if __name__ == "__main__":
         WriteBibliography(bibliography)
 
 
-    if command in ["read"]:
-        print("use the doi to get the pdf of the file")
+    if command in ["open", "read"]:
+        for cite_key in sys.argv[2:]:
+            try:
+                webbrowser.open('https://doi.org/'+ ref_db[cite_key]["DOI"])
+            except KeyError:
+                print("Invalid refernce key")
     if command in ["search"]:
         print("specify tags/names ects to serach in the databse")
     
