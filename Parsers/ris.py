@@ -16,12 +16,19 @@ def InText(params):
 
 def parse(text):
     """Parses .ris files native to endnote"""
+    refs = text.split("\n\n")
+    output = []
+    for ref in refs:
+        output.append(refParse(ref))
+    return output 
+
+def refParse(text):
     lines = text.split("\n")
     data = []
     #get key values
     for line in lines:
         key = line.split("-")[0].strip()
-        value = line.split("-")[1].strip()
+        value = line[line.index("-")+1:].strip()
         data.append([key,value])
     #convert key values to others
     #translator is a list of output file key, data to get, data to pass.
@@ -36,6 +43,8 @@ def parse(text):
                         ["Year",    ["PY"],         Dates],
                         ["DOI",     ["DO"],         Identity]
                     ]
+
+    #run through each of the refernces in this file
     parsed = {}
     for key_set in translations:
         key = key_set[0]

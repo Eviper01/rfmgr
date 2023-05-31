@@ -31,9 +31,35 @@ def ParseReference(text, filename):
     return None
 
 
-
-
-
+def BibTexExport(reference_object):
+    template = """
+    @article{{
+    {InText},
+    Author  =   {{{Authour}}},
+    Title   =   {{{Title}}},
+    Journal =   {{{Journal}}},
+    Volume  =   {{{Volume}}},
+    Number  =   {{{Number}}},
+    Pages   =   {{{Pages}}},
+    Year    =   {{{Year}}},
+    DOI     =   {{{DOI}}} }}
+    """
+    formatted_reference = template.format(
+    InText  = reference_object["InText"],
+    Title   = reference_object["Title"],
+    Authour = reference_object["Authour"],
+    Journal = reference_object["Journal"],
+    Volume  = reference_object["Volume"],
+    Pages   = reference_object["Pages"],
+    Year    = reference_object["Year"],
+    DOI     = reference_object["DOI"],
+    Number  = reference_object["Number"],
+    )
+    return formatted_reference
+    
+def WriteBibliography(text):
+    with open(bib_file, "w") as file:
+        file.write(text)
 
 
 
@@ -128,6 +154,7 @@ def SaveReferences(references_list):
                 handling = False
             if action == 'n':
                 name = input("Specify name: ")
+                reference["InText"] = name
                 ref_db[name]= reference
                 handling = False
             if handling: 
@@ -139,7 +166,7 @@ def OpenReference(file):
     try:
         with open(file, "r") as refFile:
             refData = refFile.read()
-            SaveReferences([(ParseReference(refData, file))])
+            SaveReferences((ParseReference(refData, file)))
     except FileNotFoundError:
         print("OpenRefernce: Invalid File Name:{Name} File not Found".format(Name=sys.argv[2]))
 
@@ -162,6 +189,9 @@ if __name__ == "__main__":
     command = sys.argv[1]
 
     ##write a command parser that can understand -- and - commands
+    # add a head to the database that says which references has which tags 
+
+
 
     if command in ["import", "add"]:
         if len(sys.argv[2:]) == 0:
@@ -198,8 +228,16 @@ if __name__ == "__main__":
         tags = sys.argv[2:]
         SaveConfig()
     if command in ["export", "ex"]:
-        print("sepcify tags to export: appends to file")
+        bibliography = ''
+        for key in ref_db.keys():
+            if len(set(ref_db[key]["tags"]).union(tags)) != 0:
+                bibliography += BibTexExport(ref_db[key])
+        WriteBibliography(bibliography)
+
+
     if command in ["read"]:
         print("use the doi to get the pdf of the file")
+    if command in ["search"]:
+        print("specify tags/names ects to serach in the databse")
     
     WriteDatabase()
