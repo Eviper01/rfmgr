@@ -7,8 +7,8 @@ import importlib
 import sys
 import webbrowser
 sys.path.append(__file__+'/../Parsers/')
-
-#Global Variables
+configPath =  os.getenv('APPDATA') + '/rfmgr/config.json'
+print(configPath)
 db = None
 tags = []
 bib_file = None
@@ -72,18 +72,20 @@ def LoadConfig():
     MissingConfig = False
     """Loads the config from the config.json file which is in the same directory as main.py"""
     try:
-        with open(__file__+'/../config.json',"r") as file:
+        with open(configPath,"r") as file:
             config = json.load(file)
+            print(config)
     except FileNotFoundError:
         print("config.json file not found, will create one instead")
         MissingConfig = True
     try:
         db = config['db']
     except KeyError:
-        print('database pointer missing defaulting to', __file__+'/../db.json')
-        db = __file__+'/../db.json'
+        db = os.getenv('APPDATA') + '/rfmgr/db.json'
+        print('database pointer missing defaulting to', db)
     except UnboundLocalError:
-        db = __file__+'/../db.json'
+        db = os.getenv('APPDATA') + '/rfmgr/db.json'
+        print('database pointer missing defaulting to', db)
     try:
         tags = config['tags']
     except KeyError:
@@ -95,13 +97,14 @@ def LoadConfig():
         bib_file = config['bib_file']
     except KeyError:
         print("Could not find pointer to bib file:")
-        print("defaulting to", __file__+'/../bibfile.bib')
-        bib_file = __file__+'/../bibfile.bib'
+        bib_file = os.getenv('APPDATA') + '/rfmgr/bibfile.bib'
+        print("defaulting to", bib_file)
     except UnboundLocalError:
-        bib_file = __file__+'/../bibfile.bib' 
-        print("bib file defaulting to", __file__+'/../bibfile.bib') 
+        bib_file = os.getenv('APPDATA') + '/rfmgr/bibfile.bib' 
+        print("bib file defaulting to", bib_file) 
     if MissingConfig:
-        with open(__file__+'/../config.json',"w") as file:
+        os.makedirs(os.getenv('APPDATA') + '/rfmgr/')
+        with open(configPath,"x") as file:
             config = {
                         'db': db,
                         'tags': tags,
@@ -110,7 +113,7 @@ def LoadConfig():
             file.write(json.dumps(config, indent = 4))
 
 def SaveConfig():
-    with open(__file__+'/../config.json',"w") as file:
+    with open(configPath,"w") as file:
         config = {
                     'db': db,
                     'tags': tags,
@@ -195,8 +198,11 @@ def AddAll(directory):
 LoadConfig()
 if __name__ == "__main__":
     ref_db = LoadDatabase()
-    command = sys.argv[1]
-
+    try:
+        command = sys.argv[1]
+    except IndexError:
+        print("usage: rfmgr [command] [params]")
+        command = None
     ##write a command parser that can understand -- and - commands
     # add a head to the database that says which references has which tags 
 
