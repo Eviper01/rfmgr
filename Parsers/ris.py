@@ -1,48 +1,52 @@
-def Identity(value):
-    return value[0]
+import rispy
 
-def Authours(authour_list):
-    return " and ".join(authour_list)
-
-def Dates(date):
-    return date[0][0:4]
-
-def InText(params):
-    Authour = params[0]
+def FormatInText(params):
+    Authour = params[0][0]
     Authour = Authour.split(",")[1][1]+Authour.split(',')[0]
     date = params[1]
     date = date[2:4]
     return Authour+date
 
-def parse(text):
-    """Parses .ris files native to endnote"""
-    lines = text.split("\n")
-    data = []
-    #get key values
-    for line in lines:
-        key = line.split("-")[0].strip()
-        value = line.split("-")[1].strip()
-        data.append([key,value])
-    #convert key values to others
-    #translator is a list of output file key, data to get, data to pass.
+def FormatAuthours(params):
+    authour_list = params[0] + params[1]
+    return " and ".join(authour_list)
+
+def FormatIdentity(params):
+    return params[0]
+
+def FormatPages(params):
+    return params[0] + '-' + params[1]
+
+def FormatYear(params):
+    return params[0][2:4]
+
+
+def parse(text, filename):
+    try:
+        with open(filename, "r") as file:
+            data = rispy.load(file)
+    except UnicodeDecodeError:
+        print("ris.parse: Warning: UnicodeDecodeError, attempting utf-8 decode.")
+        with open(filename, "r", encoding = "utf-8") as file:
+            data = rispy.load(file)
+    print(data[0])
+    data = data[0]
     translations = [
-                        ["InText",  ["A1", "PY"],   InText],
-                        ["Authour", ["A1", "AU"],   Authours],
-                        ["Title",   ["TI"],         Identity],
-                        ["Journal", ["JF"],         Identity],
-                        ["Volume",  ["VL"],         Identity],
-                        ["Number",  ["IS"],         Identity],
-                        ["Pages",   ["SP"],         Identity],
-                        ["Year",    ["PY"],         Dates],
-                        ["DOI",     ["DO"],         Identity]
-                    ]
-    parsed = {}
-    for key_set in translations:
-        key = key_set[0]
-        param_list = []
-        for id in key_set[1]:
-            param_list += [dataline[1] for dataline in data if dataline[0] == id]
-        value = key_set[2](param_list)
-        parsed[key] = value
-    return parsed
-                
+                    ["InText",  ["first_authors", "year"],      FormatInText],
+                    ["Authour", ["first_authors", "authors"],   FormatAuthours],
+                    ["Title",   ["title"],                      FormatIdentity],
+                    ["Journal", ["alternate_title3"],           FormatIdentity],
+                    ["Volume",  ["volume"],                     FormatIdentity],
+                    ["Number",  ["number"],                     FormatIdentity],
+                    ["Pages",   ["start_page", "end_page"],     FormatPages],
+                    ["Year",    ["year"],                       FormatYear],
+                    ["DOI",     ["doi"],                        FormatIdentity]
+                ]
+    output = {}
+    for translator in translations:
+       key = translator[0]
+       param_list = [data[fetch_key] for fetch_key in translator[1]]
+       value = translator[2](param_list) 
+       output[key] = value
+
+    return output
