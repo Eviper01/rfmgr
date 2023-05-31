@@ -26,7 +26,7 @@ def ParseReference(text, filename):
     parsers = LoadParsers()
     if extension in parsers:
         parser = importlib.import_module(extension)
-        return parser.parse(text)
+        return parser.parse(text, filename)
     print("ParseRefernce: parser not found")
     return None
 
@@ -80,9 +80,9 @@ def LoadConfig():
         db = config['db']
     except KeyError:
         print('database pointer missing defaulting to', __file__+'/../db.json')
-        db = __file__+'/../config.json'
+        db = __file__+'/../db.json'
     except UnboundLocalError:
-        db = __file__+'/../config.json'
+        db = __file__+'/../db.json'
     try:
         tags = config['tags']
     except KeyError:
@@ -169,6 +169,14 @@ def OpenReference(file):
             SaveReferences((ParseReference(refData, file)))
     except FileNotFoundError:
         print("OpenRefernce: Invalid File Name:{Name} File not Found".format(Name=sys.argv[2]))
+    except UnicodeDecodeError:
+        with open(file, "r", encoding="utf-8") as refFile:
+            print("Open Reference: Encoding issue encountered attempting utf-8 decode.")
+            refData = refFile.read()
+            SaveReferences([(ParseReference(refData, file))])
+
+
+
 
 def QuickAdd(directory):
     """attempts to parse the newest file in the specified directory"""
