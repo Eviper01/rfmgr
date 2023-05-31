@@ -133,32 +133,32 @@ def SaveReferences(references_list):
     global ref_db
     for reference in references_list:
         reference['tags'] = tags
-    if reference['InText'] not in ref_db.keys():
-        ref_db[reference['InText']] = reference
-    else:
-        print("SaveReferences: Warning: potential duplicate reference found")
-        print("Trying to Save:")
-        pp = pprint.PrettyPrinter(indent=4, width=200)
-        print("Old Reference:")
-        pp.pprint(ref_db[reference['InText']])
-        print("New Reference:")
-        pp.pprint(reference)
-        #run something to handle duplicates
-        handling = True
-        while handling:
-            action = input("'o' to overwrite, 'd' to discard new reference, 'n' to manually specify name: ")
-            if action == 'o':
-                ref_db[reference['InText']] = reference
-                handling = False
-            if action == 'd':
-                handling = False
-            if action == 'n':
-                name = input("Specify name: ")
-                reference["InText"] = name
-                ref_db[name]= reference
-                handling = False
-            if handling: 
-                print("Invalid option")
+        if reference['InText'] not in ref_db.keys():
+            ref_db[reference['InText']] = reference
+        else:
+            print("SaveReferences: Warning: potential duplicate reference found")
+            print("Trying to Save:")
+            pp = pprint.PrettyPrinter(indent=4, width=200)
+            print("Old Reference:")
+            pp.pprint(ref_db[reference['InText']])
+            print("New Reference:")
+            pp.pprint(reference)
+            #run something to handle duplicates
+            handling = True
+            while handling:
+                action = input("'o' to overwrite, 'd' to discard new reference, 'n' to manually specify name: ")
+                if action == 'o':
+                    ref_db[reference['InText']] = reference
+                    handling = False
+                if action == 'd':
+                    handling = False
+                if action == 'n':
+                    name = input("Specify name: ")
+                    reference["InText"] = name
+                    ref_db[name]= reference
+                    handling = False
+                if handling: 
+                    print("Invalid option")
 
 
 def OpenReference(file):
@@ -171,9 +171,9 @@ def OpenReference(file):
         print("OpenRefernce: Invalid File Name:{Name} File not Found".format(Name=sys.argv[2]))
     except UnicodeDecodeError:
         with open(file, "r", encoding="utf-8") as refFile:
-            print("Open Reference: Encoding issue encountered attempting utf-8 decode.")
+            print("Open Reference: Warning: Encoding issue encountered attempting utf-8 decode.")
             refData = refFile.read()
-            SaveReferences([(ParseReference(refData, file))])
+            SaveReferences((ParseReference(refData, file)))
 
 
 
