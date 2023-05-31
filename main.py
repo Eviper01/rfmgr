@@ -201,7 +201,7 @@ if __name__ == "__main__":
     try:
         command = sys.argv[1]
     except IndexError:
-        print("usage: rfmgr [command] [params]")
+        print("Usage: rfmgr [command] [paramters]")
         command = None
     ##write a command parser that can understand -- and - commands
     # add a head to the database that says which references has which tags 
