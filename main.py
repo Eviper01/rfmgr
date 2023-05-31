@@ -195,8 +195,11 @@ def AddAll(directory):
 LoadConfig()
 if __name__ == "__main__":
     ref_db = LoadDatabase()
-    command = sys.argv[1]
-
+    try:
+        command = sys.argv[1]
+    except IndexError:
+        print("Usage: rfmgr [command] [paramters]")
+        command = None
     ##write a command parser that can understand -- and - commands
     # add a head to the database that says which references has which tags 
 
