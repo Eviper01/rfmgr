@@ -16,18 +16,105 @@ ref_db = None
 
 
 
-def LoadParsers():
-    """Checks in the /Parsers/ Directory for the avalible {ext}.py Parsers"""
-    parsers = glob.glob(__file__+'/../Parsers/*') # * means all if need specific format then *
-    return [parser.split("\\")[-1].split(".")[0] for parser in parsers] 
+class RISParser:
+    def Identity(self, value, refData, translator_info):
+        try:
+            return value[0]
+        except IndexError:
+            print("ris.parser: Error could not find necessary key")
+            print(translator_info)
+            return None
+
+    def Authours(self, authour_list, refData, translator_info):
+        return " and ".join(authour_list)
+
+    def Dates(self, date, refData, translator_info):
+        try:
+            return date[0][0:4]
+        except IndexError:
+            print("ris.parse: Warning no date information found")
+            print(refData)
+            return None
+
+    def InText(self, params, refData, translator_info):
+        try:
+            Authour = params[0]
+            Authour = Authour.split(",")[1][1] + Authour.split(',')[0]
+        except IndexError:
+            print(params)
+            print("ris.parser: Warning failed to generate InText Reference")
+            try:
+                cite_key = [pairs[1] for pairs in refData if pairs[0] == "C1"][0]
+                print("Found cite_key at 'C1'", cite_key)
+            except IndexError:
+                print("Could not find alternative citekeys")
+                print(refData)
+                cite_key = input("Please manually specify cite_key >")
+            return cite_key
+        date = params[1]
+        date = date[2:4]
+        return Authour + date
+
+    def parse(self, text, filename):
+        """Parses .ris files native to endnote"""
+        refs = text.split("\n\n")
+        output = []
+        for ref in refs:
+            output.append(self.refParse(ref))
+        return output
+
+    def refParse(self, text):
+        lines = text.split("\n")
+        data = []
+        # get key values
+        for line in lines:
+            key = line.split("-")[0].strip()
+            try:
+                value = line[line.index("-") + 1:].strip()
+            except ValueError:
+                print("ris.parse: Warning: substring issue")
+                print(line)
+                value = ""
+            data.append([key, value])
+        # convert key values to others
+        # translator is a list of output file key, data to get, data to pass.
+        translations = [
+            ["InText", ["A1", "PY"], self.InText],
+            ["Authour", ["A1", "AU"], self.Authours],
+            ["Title", ["TI"], self.Identity],
+            ["Journal", ["JF", "T2"], self.Identity],
+            ["Volume", ["VL"], self.Identity],
+            ["Number", ["IS"], self.Identity],
+            ["Pages", ["SP"], self.Identity],
+            ["Year", ["PY"], self.Dates],
+            ["DOI", ["DO"], self.Identity]
+        ]
+
+        # run through each of the references in this file
+        parsed = {}
+        for key_set in translations:
+            key = key_set[0]
+            param_list = []
+            for id in key_set[1]:
+                param_list += [dataline[1] for dataline in data if dataline[0] == id]
+            value = key_set[2](param_list, data, key_set)
+            if value is not None:
+                parsed[key] = value
+        return parsed
+
+
+
+
+
+
+parsers = {"ris":RISParser}
 
 def ParseReference(text, filename):
     """Passes the text in the ref file to the relvant parser returns in dictionary of key value pairs that have the same names and formatting as bibtex however 'ref' is used to denote the refernce identifier """
     extension = filename.split(".")[-1]
-    parsers = LoadParsers()
-    if extension in parsers:
-        parser = importlib.import_module(extension)
-        return parser.parse(text, filename)
+    if extension in parsers.keys():
+        parser = parsers[extension]()
+        return parser.parse(text=text, filename=filename)
     print("ParseRefernce: parser not found")
     return None
 
